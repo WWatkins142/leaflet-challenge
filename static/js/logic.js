@@ -56,11 +56,75 @@ d3.json("https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/
 // add tectonic plates to map
 tectonicPlates.addTo(Map1);
 
+// variable for earthquake data layer
+let earthquakes = new L.layerGroup();
 
+// api call to get earthquake data and populate layergroup
+d3.json("https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_week.geojson")
+.then(
+    function(earthquakeData){
+        console.log(earthquakeData);
+        //plot the following- circles with radius dependent on magnitude and color determined by depth
+        
+        //function to choose color of data point
+        function dataColor(depth){
+            if (depth > 90)
+                return "red";
+            else if(depth > 70)
+                return "#fc6b03";
+            else if (depth > 50)
+                return "#fca903";
+            else if (depth >30)
+                return "#fcd303";
+            else if (depth > 10)
+                return "#e8fc03";
+            else
+                return "green";
+        }
+        // funtion for size of radius
+        function radiusSize(magnitude){
+            if (magnitude == 0)
+                return 1; // ensure 0 mag earthquake appears on map. 
+            else
+                return magnitude * 5; // ensure the circle is pronounced on map
+        }
+
+        // add on to data point style
+        function dataPointStyle(feature)
+        {
+            return {
+                opacity: 0.5,
+                fillOpacity: 0.5,
+                fillColor: dataColor(feature.geometry.coordinates[2]), // use index 2 for depth
+                color: "000000", 
+                radius: radiusSize(feature.properties.mag), // grab magnitude
+                weight: 0.5,
+                stroke: true
+            }
+        }
+        
+        // add GeoJson Data to earthquake layer
+        L.geoJson(earthquakeData, {
+            // create marker
+            pointToLayer: function(feature, latLng) {
+                return L. circleMarker(latLng);
+            },
+            // style for markers
+            style: dataPointStyle, // pass in earthquake data with data style function
+            // add pop-ups
+        }).addTo(earthquakes);
+    }
+  
+);
+
+// add earthquake layer to map
+earthquakes.addTo(Map1); 
 
 // add overlay for tectonic plates and earthquakes
 let overlays = {
-    "Tectonic Plates": tectonicPlates
+    "Tectonic Plates": tectonicPlates,
+    "Earthquakes": earthquakes
+
 };
 
 // Layer control
